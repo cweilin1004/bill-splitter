@@ -1,0 +1,447 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>聚餐分帳器</title>
+  <style>
+    :root {
+      --ink: #24302a;
+      --muted: #6d776f;
+      --paper: #fffdf7;
+      --cream: #f6f0e4;
+      --line: #ddd5c7;
+      --green: #2f6b4f;
+      --green-deep: #214c3a;
+      --green-soft: #e5efe8;
+      --orange: #d66a3c;
+      --orange-soft: #fff0e8;
+      --shadow: 0 24px 70px rgba(54, 65, 57, 0.14);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 12% 8%, rgba(214, 106, 60, 0.13), transparent 26rem),
+        radial-gradient(circle at 90% 92%, rgba(47, 107, 79, 0.12), transparent 29rem),
+        var(--cream);
+      font-family: system-ui, -apple-system, "Segoe UI", "Noto Sans TC", sans-serif;
+      display: grid;
+      place-items: center;
+      padding: 28px 16px;
+    }
+
+    main {
+      width: min(100%, 920px);
+      display: grid;
+      grid-template-columns: minmax(0, 0.94fr) minmax(0, 1.06fr);
+      background: var(--paper);
+      border: 1px solid rgba(123, 112, 91, 0.18);
+      border-radius: 30px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .panel { padding: clamp(28px, 5vw, 54px); }
+
+    .input-panel {
+      position: relative;
+      border-right: 1px solid var(--line);
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--green);
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0.16em;
+    }
+
+    .eyebrow::before {
+      content: "";
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--orange);
+      box-shadow: 0 0 0 5px var(--orange-soft);
+    }
+
+    h1 {
+      margin: 16px 0 10px;
+      font-family: ui-serif, "Noto Serif TC", serif;
+      font-size: clamp(2rem, 5vw, 3.25rem);
+      line-height: 1.06;
+      letter-spacing: -0.04em;
+    }
+
+    .intro {
+      margin: 0 0 32px;
+      color: var(--muted);
+      line-height: 1.75;
+      font-size: 0.98rem;
+    }
+
+    .field { margin-top: 22px; }
+
+    label, .field-title {
+      display: block;
+      margin-bottom: 9px;
+      font-size: 0.9rem;
+      font-weight: 750;
+    }
+
+    .input-wrap { position: relative; }
+
+    input[type="number"] {
+      width: 100%;
+      height: 58px;
+      border: 1.5px solid var(--line);
+      border-radius: 14px;
+      padding: 0 54px 0 16px;
+      color: var(--ink);
+      background: #fff;
+      font: inherit;
+      font-size: 1.18rem;
+      font-weight: 750;
+      outline: none;
+      transition: border-color .18s ease, box-shadow .18s ease;
+    }
+
+    input[type="number"]:focus {
+      border-color: var(--green);
+      box-shadow: 0 0 0 4px rgba(47, 107, 79, 0.12);
+    }
+
+    .unit {
+      position: absolute;
+      right: 17px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted);
+      font-weight: 700;
+      pointer-events: none;
+    }
+
+    .switch-row {
+      min-height: 68px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 13px 15px;
+      border: 1.5px solid var(--line);
+      border-radius: 14px;
+      background: #fff;
+      cursor: pointer;
+    }
+
+    .switch-copy strong, .switch-copy small { display: block; }
+    .switch-copy strong { font-size: 0.98rem; }
+    .switch-copy small { margin-top: 3px; color: var(--muted); }
+
+    .switch {
+      width: 50px;
+      height: 29px;
+      flex: 0 0 auto;
+      border-radius: 99px;
+      background: #c9cec9;
+      padding: 3px;
+      transition: background .18s ease;
+    }
+
+    .switch::after {
+      content: "";
+      display: block;
+      width: 23px;
+      height: 23px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 2px 6px rgba(0,0,0,.18);
+      transition: transform .18s ease;
+    }
+
+    #service { position: absolute; opacity: 0; pointer-events: none; }
+    #service:focus-visible + .switch-row { outline: 3px solid rgba(47, 107, 79, .25); }
+    #service:checked + .switch-row .switch { background: var(--green); }
+    #service:checked + .switch-row .switch::after { transform: translateX(21px); }
+
+    .error {
+      min-height: 22px;
+      margin: 10px 0 0;
+      color: #a53f2b;
+      font-size: 0.86rem;
+      font-weight: 650;
+    }
+
+    .result-panel {
+      background: var(--green-deep);
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      position: relative;
+      isolation: isolate;
+    }
+
+    .result-panel::after {
+      content: "";
+      position: absolute;
+      width: 270px;
+      height: 270px;
+      right: -110px;
+      top: -100px;
+      border: 50px solid rgba(255,255,255,.035);
+      border-radius: 50%;
+      z-index: -1;
+    }
+
+    .result-kicker {
+      color: #b9d0c2;
+      font-size: .78rem;
+      font-weight: 800;
+      letter-spacing: .13em;
+    }
+
+    .total-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 14px;
+      margin: 12px 0 26px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid rgba(255,255,255,.15);
+    }
+
+    .total-row span { color: #d6e1da; }
+    .total-row strong { font-size: clamp(1.7rem, 5vw, 2.65rem); letter-spacing: -.04em; }
+
+    .share-card {
+      padding: 19px 20px;
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 17px;
+    }
+
+    .share-card + .share-card { margin-top: 12px; }
+
+    .share-card.payer {
+      background: var(--orange-soft);
+      border-color: transparent;
+      color: var(--ink);
+    }
+
+    .share-line {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 12px;
+    }
+
+    .share-line span { font-weight: 700; }
+    .share-line strong { font-size: clamp(1.45rem, 4vw, 2rem); letter-spacing: -.03em; white-space: nowrap; }
+
+    .badge {
+      display: inline-block;
+      margin-top: 8px;
+      padding: 5px 9px;
+      border-radius: 99px;
+      color: #9d4626;
+      background: rgba(214,106,60,.12);
+      font-size: .77rem;
+      font-weight: 800;
+    }
+
+    .details {
+      margin-top: 24px;
+      display: grid;
+      gap: 10px;
+      color: #c8d7ce;
+      font-size: .88rem;
+    }
+
+    .detail-line { display: flex; justify-content: space-between; gap: 16px; }
+    .detail-line strong { color: #fff; white-space: nowrap; }
+
+    .check {
+      margin: 24px 0 0;
+      padding-top: 17px;
+      border-top: 1px solid rgba(255,255,255,.15);
+      color: #dbe8df;
+      font-size: .84rem;
+      line-height: 1.65;
+    }
+
+    .check::before {
+      content: "✓";
+      display: inline-grid;
+      place-items: center;
+      width: 21px;
+      height: 21px;
+      margin-right: 7px;
+      color: var(--green-deep);
+      background: #bde1ca;
+      border-radius: 50%;
+      font-weight: 900;
+    }
+
+    [hidden] { display: none !important; }
+
+    @media (max-width: 720px) {
+      body { padding: 0; place-items: start center; background: var(--paper); }
+      main { grid-template-columns: 1fr; border: 0; border-radius: 0; box-shadow: none; }
+      .input-panel { border-right: 0; }
+      .result-panel { min-height: 500px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="panel input-panel" aria-labelledby="page-title">
+      <div class="eyebrow">OFFLINE TOOL</div>
+      <h1 id="page-title">聚餐分帳器</h1>
+      <p class="intro">輸入帳單與人數，零頭自動算在付錢的人身上。整數好收款，總額一元不差。</p>
+
+      <div class="field">
+        <label for="amount">餐點總金額</label>
+        <div class="input-wrap">
+          <input id="amount" type="number" inputmode="numeric" min="1" step="1" value="1000" aria-describedby="error">
+          <span class="unit">元</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="people">分帳人數</label>
+        <div class="input-wrap">
+          <input id="people" type="number" inputmode="numeric" min="1" step="1" value="3" aria-describedby="error">
+          <span class="unit">人</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <span class="field-title">服務費</span>
+        <input id="service" type="checkbox">
+        <label class="switch-row" for="service">
+          <span class="switch-copy">
+            <strong>加 10% 服務費</strong>
+            <small>服務費四捨五入至整元</small>
+          </span>
+          <span class="switch" aria-hidden="true"></span>
+        </label>
+      </div>
+      <p id="error" class="error" role="alert" aria-live="polite"></p>
+    </section>
+
+    <section class="panel result-panel" aria-labelledby="result-title" aria-live="polite">
+      <div class="result-kicker" id="result-title">這次要收</div>
+      <div class="total-row">
+        <span>應付總額</span>
+        <strong id="total">1,000 元</strong>
+      </div>
+
+      <div class="share-card payer">
+        <div class="share-line">
+          <span>付錢的人</span>
+          <strong id="payer-share">334 元</strong>
+        </div>
+        <span class="badge" id="remainder-note">含零頭 1 元</span>
+      </div>
+
+      <div class="share-card" id="others-card">
+        <div class="share-line">
+          <span id="others-label">其他 2 人・每人</span>
+          <strong id="other-share">333 元</strong>
+        </div>
+      </div>
+
+      <div class="details">
+        <div class="detail-line">
+          <span>餐點金額</span>
+          <strong id="base-total">1,000 元</strong>
+        </div>
+        <div class="detail-line" id="service-line" hidden>
+          <span>10% 服務費</span>
+          <strong id="service-total">0 元</strong>
+        </div>
+      </div>
+
+      <p class="check" id="sum-check">334 + 333 × 2 = 1,000 元，金額吻合</p>
+    </section>
+  </main>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const amountInput = document.querySelector("#amount");
+      const peopleInput = document.querySelector("#people");
+      const serviceInput = document.querySelector("#service");
+      const error = document.querySelector("#error");
+      const resultPanel = document.querySelector(".result-panel");
+      const format = new Intl.NumberFormat("zh-TW");
+
+      const money = (value) => `${format.format(value)} 元`;
+
+      function calculate() {
+        const amount = Number(amountInput.value);
+        const people = Number(peopleInput.value);
+
+        if (!Number.isSafeInteger(amount) || amount < 1) {
+          error.textContent = "請輸入大於 0 的整數金額。";
+          resultPanel.hidden = true;
+          return;
+        }
+
+        if (!Number.isSafeInteger(people) || people < 1) {
+          error.textContent = "請輸入至少 1 人的整數人數。";
+          resultPanel.hidden = true;
+          return;
+        }
+
+        error.textContent = "";
+        resultPanel.hidden = false;
+
+        const serviceFee = serviceInput.checked ? Math.round(amount * 0.1) : 0;
+        const total = amount + serviceFee;
+        const equalShare = Math.floor(total / people);
+        const remainder = total % people;
+        const payerShare = equalShare + remainder;
+        const otherCount = people - 1;
+
+        document.querySelector("#total").textContent = money(total);
+        document.querySelector("#payer-share").textContent = money(payerShare);
+        document.querySelector("#other-share").textContent = money(equalShare);
+        document.querySelector("#others-label").textContent = `其他 ${format.format(otherCount)} 人・每人`;
+        document.querySelector("#base-total").textContent = money(amount);
+        document.querySelector("#service-total").textContent = money(serviceFee);
+        document.querySelector("#service-line").hidden = !serviceInput.checked;
+        document.querySelector("#others-card").hidden = otherCount === 0;
+
+        const note = document.querySelector("#remainder-note");
+        note.textContent = remainder ? `含零頭 ${format.format(remainder)} 元` : "本次沒有零頭";
+
+        document.querySelector("#sum-check").textContent = otherCount
+          ? `${format.format(payerShare)} + ${format.format(equalShare)} × ${format.format(otherCount)} = ${format.format(total)} 元，金額吻合`
+          : `${format.format(payerShare)} = ${format.format(total)} 元，金額吻合`;
+      }
+
+      [amountInput, peopleInput, serviceInput].forEach((element) => {
+        element.addEventListener("input", calculate);
+        element.addEventListener("change", calculate);
+      });
+
+      calculate();
+    })();
+  </script>
+</body>
+</html>
